@@ -1,15 +1,10 @@
 // Loosely based on https://www.youtube.com/watch?v=xGmXxpIj6vs&ab_channel=ChrisDeLeonofHomeTeamGameDev
 
 #include <SPI.h>        //SPI.h must be included as DMD is written by SPI (the IDE complains otherwise)
-#include <DMD.h>
-#include <TimerOne.h>
+#include <DMD2.h>
 #include "SystemFont5x7.h"
 
-#define DISPLAYS_ACROSS 1
-#define DISPLAYS_DOWN 1
-DMD dmd(DISPLAYS_ACROSS, DISPLAYS_DOWN);
-
-int mynumber = 0;
+SoftDMD dmd(1,1);
 
 bool renderedIntro = false;
 bool renderedGameover = false;
@@ -33,10 +28,6 @@ int appleOn = 0;
 int tailLength = 3;
 int tail[99][2] = {};
 
-void ScanDMD(){ 
-  dmd.scanDisplayBySPI();
-}
-
 // Restart arduino function
 void(* resetFunc) (void) = 0;
 
@@ -53,10 +44,9 @@ void setup(void) {
     tail[i][1]=-1;
   }
 
-   //Timer1 needed for dmd
-   Timer1.initialize( 1000 );
-   Timer1.attachInterrupt( ScanDMD );
-   dmd.clearScreen( true );   //true is all pixel off, false is all pixel on
+  dmd.setBrightness(1);
+  dmd.selectFont(SystemFont5x7);
+  dmd.begin();
 }
 
 
@@ -79,23 +69,25 @@ void renderIntro() {
     {0,0,0,0,0,0,0,0,0,0,0,1,1,0,1},
     {0,0,0,0,0,0,0,0,0,0,0,0,1,1,1},
   };
+
   // Render image
   for (int row=0; row<16; row++) {
     for(int col=0; col<32; col++) {
-      dmd.writePixel(col, row, GRAPHICS_NORMAL, image[row][col]);
+      if(image[row][col]){dmd.setPixel(col, row);}
     }
   }
 }
 
 void renderGameOver() {
-  dmd.clearScreen( true );
+  dmd.clearScreen();
   // convert points int to char* for drawSting function
   char buffer[8];
   itoa( points, buffer, 10 );
 
   char const* pointsString = buffer;
 
-  int gameoverImage[13][13] = {
+  int gameoverImage[14][13] = {
+    {0},
     {0,0,0,0,1,1,1,1,1},
     {0,0,0,1,0,0,0,0,0,1},
     {0,0,1,0,0,0,0,0,0,0,1},
@@ -119,14 +111,14 @@ void renderGameOver() {
   int posx=0;
   int posy=0;
 
-  for (int row=1; row<14; row++) {
+  for (int row=1; row<15; row++) {
     for(int col=15; col<28; col++) {
       // Let's put a smile on that face
       if(win && row > 8 && row < 11) {
-        dmd.writePixel(col, row, GRAPHICS_NORMAL, smile[posx-8][posy]);
+        if(smile[posx-8][posy]){dmd.setPixel(col, row);}
       }
       else {
-        dmd.writePixel(col, row, GRAPHICS_NORMAL, gameoverImage[posx][posy]);
+        if(gameoverImage[posx][posy]){dmd.setPixel(col, row);}
       }
       posy=posy+1;
     }
@@ -134,8 +126,7 @@ void renderGameOver() {
     posy=0;
   }
 
-  dmd.selectFont(SystemFont5x7);
-  dmd.drawString(0,  4, pointsString, 2, GRAPHICS_NORMAL);
+  dmd.drawString(2,  5, pointsString);
 }
 
 void loop(void) {
@@ -172,7 +163,7 @@ void loop(void) {
     else if(btnLeft == LOW && xv !=1) { yv=0; xv=-1;}
     else if(btnRight == LOW && xv !=-1) { yv=0; xv=1;}
     
-    dmd.clearScreen( true );
+    dmd.clearScreen();
 
     // Shift tail with one
     for(int j=tailLength-1; j>0; j--){
@@ -222,14 +213,14 @@ void loop(void) {
     }
   
     // render player
-    dmd.writePixel(px, py, GRAPHICS_NORMAL, 1);
+    dmd.setPixel(px, py);
     
     for(int i=0; i<tailLength; i++){
-      dmd.writePixel(tail[i][0], tail[i][1], GRAPHICS_NORMAL, 1);
+      dmd.setPixel(tail[i][0], tail[i][1]);
     }
 
     // Render apple
-    dmd.writePixel(ax, ay, GRAPHICS_NORMAL, 1);
+    dmd.setPixel(ax, ay);
   }
   // GAME END
 
