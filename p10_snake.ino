@@ -14,6 +14,8 @@ bool gameover = false;
 bool win = false;
 int points = 0;
 
+bool sound = false;
+
 int px = 0; // player pos horizontal
 int py = 0; // player pos vertical
 int tcx = 32; // tilecount horizontal
@@ -44,7 +46,7 @@ void setup(void) {
     tail[i][1]=-1;
   }
 
-  dmd.setBrightness(1);
+  dmd.setBrightness(8);
   dmd.selectFont(SystemFont5x7);
   dmd.begin();
 }
@@ -135,6 +137,11 @@ void loop(void) {
   int btnLeft = digitalRead(4);
   int btnRight = digitalRead(5);
 
+  if(sound) {
+    noTone(A0);
+    sound=false;
+  }
+
   if(intro) {
     if(renderedIntro == false){renderIntro(); renderedIntro = true;}
 
@@ -182,6 +189,10 @@ void loop(void) {
     for(int k=0; k<tailLength; k++){
       if(tail[k][0] == px && tail[k][1] == py) {
         gameover=true;
+        tone(A0, 131);
+        delay(300);
+        noTone(A0);
+        delay(200);
       }
     }
 
@@ -193,10 +204,13 @@ void loop(void) {
 
     // Collect apple
     if(ax == px && ay == py) {
+      tone(A0, 698);
+      sound=true;
       points = points + 1;
       if(points == 99){
         gameover = true;
         win = true;
+        // TODO: Add winning music maybe?
       }
       tailLength = tailLength+1;
 
@@ -225,5 +239,5 @@ void loop(void) {
   // GAME END
 
   // some delay at the end to slow things down, there should be a proper render loop, but I'm lazy
-  delay(100);
+  delay(80);
 }
