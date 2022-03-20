@@ -143,10 +143,15 @@ void loop(void) {
   }
 
   if(intro) {
-    if(renderedIntro == false){renderIntro(); renderedIntro = true;}
+    if(renderedIntro == false){
+      dmd.clearScreen();
+      renderIntro();
+      renderedIntro = true;
+     }
 
     if(btnUp == LOW || btnDown == LOW || btnLeft == LOW || btnRight == LOW){
        intro = false;
+       dmd.clearScreen();
     }
     delay(200);
   }
@@ -154,6 +159,7 @@ void loop(void) {
     //Restart after button input, but wait for render and timeout, to avoid accidental skip
     if((btnUp == LOW || btnDown == LOW || btnLeft == LOW || btnRight == LOW) && renderedGameover) {
       delay(500);
+      dmd.clearScreen();
       resetFunc();
     }
 
@@ -163,14 +169,18 @@ void loop(void) {
   }
   // GAME START
   else {
+    int removeTailX;
+    int removeTailY;
+    
     // Input reading
-
     if(btnUp == LOW && yv != 1) { yv=-1; xv=0;}
     else if(btnDown == LOW && yv !=-1) { yv=1; xv=0;}
     else if(btnLeft == LOW && xv !=1) { yv=0; xv=-1;}
     else if(btnRight == LOW && xv !=-1) { yv=0; xv=1;}
     
-    dmd.clearScreen();
+    // Store last tail position for future removal
+    removeTailX = tail[tailLength-1][0];
+    removeTailY = tail[tailLength-1][1];
 
     // Shift tail with one
     for(int j=tailLength-1; j>0; j--){
@@ -207,7 +217,7 @@ void loop(void) {
       tone(A0, 698);
       sound=true;
       points = points + 1;
-      if(points == 99){
+      if(points == 99) {
         gameover = true;
         win = true;
         // TODO: Add winning music maybe?
@@ -225,13 +235,12 @@ void loop(void) {
         }
       }
     }
-  
-    // render player
+
+    // Remove tails last piece
+    dmd.setPixel(removeTailX, removeTailY, GRAPHICS_OFF);
+
+    // render player (snake head)
     dmd.setPixel(px, py);
-    
-    for(int i=0; i<tailLength; i++){
-      dmd.setPixel(tail[i][0], tail[i][1]);
-    }
 
     // Render apple
     dmd.setPixel(ax, ay);
